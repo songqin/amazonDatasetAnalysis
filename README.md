@@ -13,15 +13,16 @@ Goal:
 Procedures:
 1. get the product IDs in the reviewes that were reviewed by the top10000 reviewers, put it in a list/map pidMap
 1.1. get the stats:distribution of the scores of the product reviewed by the top10000
-2. create a table:t1 and populate it with the reviews that uid is in the top10000 reviewers list. 
+2. create a table: uid_pid_score_text (uid, pid, score, text) and populate it with the reviews that uid is in the top10000 reviewers list. 
 3. compute the ave_score for each productID (aggregation) in table:t1, and create a table t2 (productID, ave_score)
 4. create a table t3 (uid, pid, score, ave_score, ) where pid is in the pidMap. 
 5. count the CPT based on the rules.
 
 rules (Assumption)
 1. RW=T, if: uid in top10000 || score ave_score (in)
+RW=F, if: 
 2. CS=T, if ave_score>3 (Why 3? because if it's lower than 3, people probably think it's not good product. )
-3. CS=F, if ave_score<=3
+CS=F, if ave_score<=3
 
 
 database table:
@@ -41,3 +42,6 @@ intiuition:
 Possible experimental errors:
 some products have low review score, because of the delivery lateness, damage of the product.
 
+Output:
+# of reviews reviewed by top10000 = 34705
+# of all reviews  = 3447249
