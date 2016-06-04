@@ -14,7 +14,7 @@ print sys.argv[1]
 n=0
 debug=1
 client = MongoClient("localhost:27017")
-db = client.test
+db = client.amazon1
 
 # student_record = {'name':'song','grade':98}
 # db.students.insert(student_record)
@@ -57,61 +57,75 @@ top10000 = [x.split('profile/')[1] for x in content] #A1TWM78I835NGZ
 # print top10000
 
 r=0
-# f=open('pidTop10000.txt', 'w')
-# for review in parse(sys.argv[1]):
-# 	n+=1
-# 	uid = review["reviewerID"]
-# 	pid = review["asin"]
-# 	s = review["overall"]
-# 	t = review["reviewText"]
-# 	# uid_pid_score_text
+# a file with the product id ( with duplicates) of the products reviewed by top 10000 reviewers
+f1=open('pidTop10000.txt', 'w')
 
-# 	# print uid, pid, s
-# 	if(uid in top10000):
-# 		r+=1
-# 		record = {
-# 		'uid': uid,
-# 		'pid': pid,
-# 		'score': s,
-# 		'text': t
-# 		}
-# 		# print record
-# 		# db.uid_pid_score_text.insert(record)
-# 		# f.write(pid+'\n')
-# 	if(debug):
-# 		if(n==1000):
-# 			break
-# results = db.uid_pid_score_text.find()
-# for record in results:
-# 	print record
+# create table and a file of products
+for review in parse(sys.argv[1]):
+	n+=1
+	uid = review["reviewerID"]
+	pid = review["asin"]
+	s = review["overall"]
+	t = review["reviewText"]
+	# uid_pid_score_text
+
+	# print uid, pid, s
+	if(uid in top10000):
+		r+=1
+		record = {
+		'uid': uid,
+		'pid': pid,
+		'score': s
+		# ,
+		# 'text': t
+		}
+		# print record
+		# db.uid_pid_score_text.insert(record)
+		# f.write(pid+'\n')
+	if(debug):
+		if(n==1000):
+			break
+
+# end 
+
+results = db.uid_pid_score_text.find()
+for record in results:
+	print record
 results = db.uid_pid_score_text.aggregate([{
 	"$group":{
 	"_id": "$pid",
 	"avg": {"$avg":"$score"}
 	}}])
-# print results
+print results
 dict={}
 for record in results:
 	pid =  record['_id']
 	ave = record['avg']
 	dict[pid] = ave
-# print dict
-
-# print str(1.0)
-# for k in dict:
-# 	# result = db.uid_pid_score_text.find({pid:key})
-# 	# print result
-# 	v=dict[k]
-# 	db.uid_pid_score_text.update(
-# 		{pid:k},
-# 		{
-# 			'$set':{
-# 				'ave': v
-# 			}
-# 		},
-# 			upsert = False,		
-# 			multi=  True
-# 	)
+print dict
+# add average score field to table
+for k in dict:
+	# result = db.uid_pid_score_text.find({pid:key})
+	# print result
+	v=dict[k]
+	db.uid_pid_score_text.update(
+		{'pid':k},
+		{
+			'$set':{
+				'ave': v
+			}
+		},
+			upsert = False,		
+			multi=  True
+	)
+print ''
+print ''
+print ''
+print ''
+print ''
+results = db.uid_pid_score_text.find()
+for record in results:
+	print record
 # print dict['3998899561']
 # results = db.uid_pid_score_text.find()
 # for record in results:
@@ -125,22 +139,22 @@ for record in results:
 # 	print record
 
 
-r= db.uid_pid_score_text.update(
-	{"pid":"3998899561"},
-	{
-		'$set':{
-			'ave': dict['3998899561']
-		}
-	},
-		upsert = False,		
-		multi=  True
-)
-print r
+# r= db.uid_pid_score_text.update(
+# 	{"pid":"3998899561"},
+# 	{
+# 		'$set':{
+# 			'ave': dict['3998899561']#bug: ave should be 'ave'
+# 		}
+# 	},
+# 		upsert = False,		
+# 		multi=  True
+# )
+# print r
 
-result = db.uid_pid_score_text.find({"pid":u"3998899561"})
-print result
-for record in result:
-	print record
+# result = db.uid_pid_score_text.find({"pid":u"3998899561"})
+# print result
+# for record in result:
+# 	print record
 # results = db.uid_pid_score_text.find()
 # for record in results:
 # 	print record
