@@ -4,6 +4,11 @@ import gzip
 import sys
 from pymongo import MongoClient
 import unicodedata
+import time
+start_time = time.time()
+debug=0
+createTempTable=1
+createReviewTable=1
 def parse(path):
 	g=gzip.open(path, 'r')
 	for l in g:
@@ -12,152 +17,135 @@ def parse(path):
 print sys.argv[1]
 
 n=0
-debug=1
 client = MongoClient("localhost:27017")
-db = client.amazon1
-
-# student_record = {'name':'song','grade':98}
-# db.students.insert(student_record)
-# student_record = {'name':'song','grade':97}
-# db.students.insert(student_record)
-# student_record = {'name':'song','grade':96}
-# db.students.insert(student_record)
-
-# student_record = {'name':'qin','grade':99.6}
-# db.students.insert(student_record)
-# student_record = {'name':'qin','grade':99.5}
-# db.students.insert(student_record)
-# student_record = {'name':'qin','grade':99.4}
-# db.students.insert(student_record)
-
-# results = db.students.find()
-# for record in results:
-# 	print record
-# 	print(record['name'] + ',',record['grade'])
-	# print type(record['name'])
-	# print type(record['grade'])
-	# print record['grade']
-	# print type(float(record['grade']))
-	# print float(record['grade'])
-# to use aggregate, you need a newer version of mongodb. I'm using 3.0.12
-# results = db.students.aggregate([{
-# 	"$group":{
-# 	"_id": "$name",
-# 	"avg": {"$avg":"$grade"}
-# 	}}])
-# for record in results:
-# 	print record
-
-# get top10000 uid
-with open('top10000.txt', 'r') as f:
-	content = f.readlines()
-content = [x.strip('\n') for x in content]
-content = [x.split(' ')[1] for x in content] #http://www.amazon.com/gp/pdp/profile/A1TWM78I835NGZ
-top10000 = [x.split('profile/')[1] for x in content] #A1TWM78I835NGZ
-# print top10000
-
-r=0
-# a file with the product id ( with duplicates) of the products reviewed by top 10000 reviewers
-f1=open('pidTop10000.txt', 'w')
-
-# create table and a file of products
-for review in parse(sys.argv[1]):
-	n+=1
-	uid = review["reviewerID"]
-	pid = review["asin"]
-	s = review["overall"]
-	t = review["reviewText"]
-	# uid_pid_score_text
-
-	# print uid, pid, s
-	if(uid in top10000):
-		r+=1
-		record = {
-		'uid': uid,
-		'pid': pid,
-		'score': s
-		# ,
-		# 'text': t
-		}
-		# print record
-		# db.uid_pid_score_text.insert(record)
-		# f.write(pid+'\n')
-	if(debug):
-		if(n==1000):
-			break
-
-# end 
-
-results = db.uid_pid_score_text.find()
-for record in results:
-	print record
-results = db.uid_pid_score_text.aggregate([{
-	"$group":{
-	"_id": "$pid",
-	"avg": {"$avg":"$score"}
-	}}])
-print results
-dict={}
-for record in results:
-	pid =  record['_id']
-	ave = record['avg']
-	dict[pid] = ave
-print dict
-# add average score field to table
-for k in dict:
-	# result = db.uid_pid_score_text.find({pid:key})
-	# print result
-	v=dict[k]
-	db.uid_pid_score_text.update(
-		{'pid':k},
-		{
-			'$set':{
-				'ave': v
+# use a database named amazon1
+client.drop_database('test2')
+db = client.test2
+products=[]#products reviewed by top10000 reviewers
+# get top10000 reviewer's uid
+if(createTempTable):
+	with open('top10000.txt', 'r') as f:
+		content = f.readlines()
+	content = [x.strip('\n') for x in content]
+	content = [x.split(' ')[1] for x in content] #http://www.amazon.com/gp/pdp/profile/A1TWM78I835NGZ
+	top10000 = [x.split('profile/')[1] for x in content] #A1TWM78I835NGZ
+	# a file with the pid ( with duplicates) of the products 
+	# reviewed by top 10000 reviewers
+	# f1=open('pidTop10000.txt', 'w')
+	db.tempTable.remove()
+	db.reviewTable.remove()
+	# create table (tempTable) and a file of pid (pidTop10000.txt)
+	for review in parse(sys.argv[1]):
+		n+=1
+		uid = review["reviewerID"]
+		pid = review["asin"]
+		s = review["overall"]
+		t = review["reviewText"]
+		# create a number of reviews reviewed only by top100000
+		if(uid in top10000):
+			record = {
+			'uid': uid,
+			'pid': pid,
+			'score': s
+			# ,
+			# 'text': t
 			}
-		},
-			upsert = False,		
-			multi=  True
-	)
-print ''
-print ''
-print ''
-print ''
-print ''
-results = db.uid_pid_score_text.find()
-for record in results:
-	print record
-# print dict['3998899561']
-# results = db.uid_pid_score_text.find()
-# for record in results:
-# 	print record
-# print ''
-# print ''
-# print ''
-# result = db.uid_pid_score_text.find({"pid":u"3998899561"})
-# print result
-# for record in result:
-# 	print record
 
+			# print record
+			db.tempTable.insert(record)
+			if (pid not in products):
+				products.append(pid)
+			# f1.write(pid+'\n')
+		if(debug):
+			if(n==1000):
+				break
 
-# r= db.uid_pid_score_text.update(
-# 	{"pid":"3998899561"},
-# 	{
-# 		'$set':{
-# 			'ave': dict['3998899561']#bug: ave should be 'ave'
-# 		}
-# 	},
-# 		upsert = False,		
-# 		multi=  True
-# )
-# print r
+	# f1.close()
+	# to use aggregate, you need a newer version of mongodb. I'm using 3.0.12
+	results = db.tempTable.aggregate([{
+		"$group":{
+		"_id": "$pid",
+		"avg": {"$avg":"$score"}
+		}}])
+	dict={}
+	for record in results:
+		pid =  record['_id']
+		ave = record['avg']
+		dict[pid] = ave
+	# add average score field to table
+	# for k in dict:
+	# 	# result = db.tempTable.find({pid:key})
+	# 	# print result
+	# 	v=dict[k]
+	# 	db.tempTable.update(
+	# 		{'pid':k},
+	# 		{
+	# 			'$set':{
+	# 				'ave': v
+	# 			}
+	# 		},
+	# 			upsert = False,		
+	# 			multi=  True
+	# 	)
 
-# result = db.uid_pid_score_text.find({"pid":u"3998899561"})
-# print result
-# for record in result:
-# 	print record
-# results = db.uid_pid_score_text.find()
-# for record in results:
-# 	print record
+if(createReviewTable):
+	print 'create review table'
+	# print 'dict', dict
+	# with open('pidTop10000.txt', 'r') as f:
+	# 	products = f.readlines()
+	# products = [x.strip('\n') for x in products]
 
+	# print "products", products
+	# print "top10000", top10000
+	n=0
+	tt=tf=ft=ff=0 #cpt for reliability and eligibility
+	for review in parse(sys.argv[1]):
+		n+=1
+		pid = review["asin"]
+		if(pid in products):
+			uid = review["reviewerID"]
+			s = review["overall"]
+			t = review["reviewText"]
+			ave = dict[pid]
+			# t ?
+			if((uid in top10000) or (s>3 and ave>3) or (s<=3 and ave<=3)):
+				if(ave>3):
+					tt+=1
+				else:
+					tf+=1
+			else:
+				if(ave>3):
+					ft+=1
+				else:
+					ff+=1
+
+			# r = db.tempTable.find({"pid": pid}, {"ave" :1 })
+			# if(r):
+			# 	ave = r[0]["ave"]
+			# record = {
+			# 'uid': uid,
+			# 'pid': pid,
+			# 'score': s
+			# ,'ave' : ave
+			# ,
+			# 'text': t
+			# }
+			# print record
+			# db.reviewTable.insert(record)
+		if(debug):
+			if(n==1000):
+				break
+# print db.reviewTable.count()
+print db.command("dbstats")
 client.close()
-# f.close()
+print 'tt', tt
+print 'tf', tf
+print 'ft', ft
+print 'ff', ff
+all = tt+tf+ft+ff
+print 'all', all
+print tt*1.0/all
+print tf*1.0/all
+print ft*1.0/all
+print ff*1.0/all
+print("--- %s seconds ---" % (time.time() - start_time))
