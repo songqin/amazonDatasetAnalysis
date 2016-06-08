@@ -19,8 +19,10 @@ print sys.argv[1]
 n=0
 client = MongoClient("localhost:27017")
 # use a database named amazon1
-client.drop_database('test2')
-db = client.test2
+client.drop_database('test')
+db = client.test
+# dataset 1: test2
+# datset 2: amazon2  reviews_Home_and_Kitchen.json.gz
 products=[]#products reviewed by top10000 reviewers
 # get top10000 reviewer's uid
 if(createTempTable):
@@ -107,6 +109,7 @@ if(createReviewTable):
 			s = review["overall"]
 			t = review["reviewText"]
 			ave = dict[pid]
+			# RW CS
 			# t ?
 			if((uid in top10000) or (s>3 and ave>3) or (s<=3 and ave<=3)):
 				if(ave>3):
@@ -138,14 +141,15 @@ if(createReviewTable):
 # print db.reviewTable.count()
 print db.command("dbstats")
 client.close()
-print 'tt', tt
-print 'tf', tf
-print 'ft', ft
-print 'ff', ff
+print tt
+print tf
+print ft
+print ff
 all = tt+tf+ft+ff
-print 'all', all
+print all
 print tt*1.0/all
 print tf*1.0/all
 print ft*1.0/all
 print ff*1.0/all
-print("--- %s seconds ---" % (time.time() - start_time))
+# print("--- %s seconds ---" % (time.time() - start_time))
+print time.time() - start_time

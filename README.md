@@ -3,7 +3,35 @@ Analyze an Amazon.com dataset of product reviews in a machine learning approach.
 
 Dataset: meta_Cell_Phones_and_Accessories.json.gz
 To run :
+dataset1: Cell Phones and Accessories 
+ 	reviews (3,447,249 reviews) 	metadata (346,793 products)
 ./readDataset.py  ./dataset/reviews_Cell_Phones_and_Accessories.json.gz
+dataset2: Home and Kitchen 
+ 	reviews (4,253,926 reviews) 	metadata (436,988 products)
+./readDataset.py ./dataset/reviews_Home_and_Kitchen.json.gz
+ 	5-core (551,682 reviews) 	ratings only (4,253,926 ratings)
+./readDataset.py ./dataset/reviews_Home_and_Kitchen_5.json.gz
+dataset 3: Sports and Outdoors 
+reviews (3,268,695 reviews) 	metadata (532,197 products)
+./readDataset.py  ./dataset/reviews_Sports_and_Outdoors.json.gz
+dataset 4: Electronics 
+ 	reviews (7,824,482 reviews) 	metadata (498,196 products)
+./readDataset.py  ./dataset/reviews_Electronics.json.gz
+dataset 5: Movies and TV 
+ 	reviews (4,607,047 reviews) 	metadata (208,321 products)
+./readDataset.py  ./dataset/reviews_Movies_and_TV.json.gz
+dataset 6: Clothing, Shoes and Jewelry 5,748,920 reviews
+./readDataset.py  ./dataset/
+dataset 7: Kindle Store 3,205,467 reviews
+./readDataset.py  ./dataset/
+dataset 8: Apps for Android 2,638,173 reviews
+./readDataset.py  ./dataset/ 
+dataset 9: Grocery and Gourmet Food  1,297,156 reviews
+./readDataset.py  ./dataset/ 500,176 reviews
+dataset 10:  Digital Music  	reviews (500,176 reviews) 	metadata (84,901 products)
+./readDataset.py  ./dataset/
+
+sorted order: 
 
 asin: product id
 reviewerID: reviewer id
